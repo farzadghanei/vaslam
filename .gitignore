@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.so
+.Python
+build/
+dist/
+sdist/
+*.egg-info/
+.installed.cfg
+*.egg
+
+docs/_build/
+
+.idea
+.coverage
+.tox
+tags
