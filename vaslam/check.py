@@ -1,7 +1,7 @@
 from logging import getLogger
-from typing import List
+from typing import List, Tuple
 from vaslam.conf import Conf
-from vaslam.net import ping_host, resolve_any_domain, http_get
+from vaslam.net import ping_host, resolve_any_domain, http_get, PingStats
 
 
 logger = getLogger(__name__)
@@ -16,6 +16,8 @@ class Result:
         self.dns = False  # type: bool
         self.local_dns = False  # type: bool
         self.ipv4 = ""  # type: str
+        self.gateway_ping_stats = PingStats()  # type: PingStats
+        self.internet_ping_stats = PingStats()  # type: PingStats
 
     @staticmethod
     def all_ok():
@@ -32,22 +34,28 @@ def check_dns(name_servers: List[str], domains: List[str]) -> str:
     Return the first name server address that could resolve any of the domains.
     Return emptry string if none of the name servers could resolve any of the domains.
     """
+    logger.warning("checking individual name server is not supported yet!")
+    domain, ip = resolve_any_domain(domains)
+    return ip
     for ns in name_servers:
-        logger.debug("checking name server {}".format(ns))
-        if resolve_any_domain(ns, domains):
+        logger.wa("checking name server {}".format(ns))
+        domain, ip = resolve_any_domain(domains)
+        if ip:
             return ns
     return ""
 
 
-def check_ping_ipv4(hosts: List[str]) -> str:
+def check_ping_ipv4(hosts: List[str]) -> Tuple[str, PingStats]:
     """Ping spcified hosts, returns the first host address that could be pinged.
-    Return emptyr string if none of the hosts could be pinged.
+    Return empty string if none of the hosts could be pinged.
     """
+    ping_stats = PingStats()
     for host in hosts:
         logger.debug("pinging host {}".format(host))
-        if ping_host(host):
-            return host
-    return ""
+        ping_stats = ping_host(host)
+        if ping_stats.connected():
+            return (host, ping_stats)
+    return "", ping_stats
 
 
 def get_visible_ipv4(urls: List[str]) -> str:
@@ -57,7 +65,7 @@ def get_visible_ipv4(urls: List[str]) -> str:
     for url in urls:
         try:
             logger.debug("getting visible ipv4 from {}".format(url))
-            ip = http_get(url)
+            _, ip = http_get(url)
             if ip:
                 return ip
         except RuntimeError as err:
@@ -69,24 +77,24 @@ def get_visible_ipv4(urls: List[str]) -> str:
 
 
 def diagnose_network(conf: Conf) -> Result:
-    local_dns = check_dns(conf.name_servers, conf.domains)
-    dns_ok = local_dns or check_dns(conf.default_name_servers, conf.domains)
+    dns_ok = check_dns(conf.ipv4_default_name_servers, conf.domains)
     ipv4 = dns_ok and get_visible_ipv4(conf.ipv4_echo_urls)
 
     if ipv4:
         result = Result.all_ok()
         result.ipv4 = ipv4
-        return result
+    else:
+        result = Result()
+        result.dns = dns_ok
 
-    result = Result()
-    result.dns = dns_ok
-    result.local_dns = local_dns
+    gateway, result.gateway_ping_stats = check_ping_ipv4([conf.ipv4_gateway])
+    remote_host, result.internet_ping_stats = check_ping_ipv4(conf.ipv4_ping_hosts)
 
     if dns_ok:
         result.internet = True
         result.localnet = True
-        return result
+    else:
+        result.internet = remote_host != ""
+        result.localnet = gateway != ""
 
-    result.localnet = check_ping_ipv4(conf.gateways)
-    result.internet = check_ping_ipv4(conf.ping_hosts)
     return result
