@@ -13,7 +13,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: ISC License (ISCL)",
-    "Operating System :: OS Independent",
+    "OPERATING SYSTEM :: POSIX :: LINUX",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.5",
     "Programming Language :: Python :: 3.6",
