@@ -29,13 +29,13 @@ class PingStats:
         return self.packets_recv > 0
 
 
-def ping_host(host: str, timeout: int = 10) -> PingStats:
+def ping_host(host: str, timeout: int = 15, packets: int = 5) -> PingStats:
     """ping remote host
 
     :raises: ConnectionError on ping timeout or errors
     """
     # @TODO: maybe support ICMP packets instead of running an external process
-    return _parse_ping_output(_ping_cmd(host, timeout))
+    return _parse_ping_output(_ping_cmd(host, timeout, packets))
 
 
 def resolve_any_hostname(hostnames: List[str]) -> Tuple[str, str]:
@@ -95,7 +95,7 @@ def _parse_ping_output(out: str) -> PingStats:
     return stats
 
 
-def _ping_cmd(host: str, timeout: int = 10) -> str:
+def _ping_cmd(host: str, timeout: int = 15, packets: int = 5) -> str:
     """ping host using ping command"""
 
     if not path.exists("/usr/bin/ping"):
@@ -108,7 +108,7 @@ def _ping_cmd(host: str, timeout: int = 10) -> str:
         "-w",
         str(timeout),
         "-c",
-        "3",
+        str(packets),
         host,
     ]
     try:

@@ -37,7 +37,7 @@ class TestPing(TestCase):
 PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
 
 --- 127.0.0.1 ping statistics ---
-3 packets transmitted, 3 received, 1% packet loss, time 2063ms
+4 packets transmitted, 3 received, 25% packet loss, time 2063ms
 rtt min/avg/max/mdev = 0.079/0.083/0.087/0.003 ms
             """
         self.mock_run_result = CompletedProcess(
@@ -55,21 +55,34 @@ rtt min/avg/max/mdev = 0.079/0.083/0.087/0.003 ms
         self.mock_run.return_value = self.mock_run_result
 
     def test_ping_host_checks_ping_cmd_exists_then_runs_it(self):
-        ret = ping_host("127.0.10.10", 8)
+        ret = ping_host("127.0.10.10", 8, 4)
 
         self.mock_path.exists.assert_called_once_with("/usr/bin/ping")
         self.mock_run.assert_called_once_with(
-            ["/usr/bin/ping", "-4", "-q", "-w", "8", "-c", "3", "127.0.10.10"],
+            ["/usr/bin/ping", "-4", "-q", "-w", "8", "-c", "4", "127.0.10.10"],
             capture_output=True,
             text=True,
             timeout=8,
+        )
+
+    def test_ping_host_checks_ping_cmd_uses_deafult_timeout_and_packets(self):
+        ret = ping_host("127.0.10.10")
+
+        self.mock_path.exists.assert_called_once_with("/usr/bin/ping")
+        self.mock_run.assert_called_once_with(
+            ["/usr/bin/ping", "-4", "-q", "-w", "15", "-c", "5", "127.0.10.10"],
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
 
     def test_ping_host_returns_ping_stats(self):
         ret = ping_host("127.0.10.10")
 
         self.assertIsInstance(ret, PingStats)
-        self.assertEqual(ret.packet_loss_pct, 1)
+        self.assertEqual(ret.packet_loss_pct, 25)
+        self.assertEqual(ret.packets_sent, 4)
+        self.assertEqual(ret.packets_recv, 3)
         self.assertEqual(ret.rtt_min, 0.079)
         self.assertEqual(ret.rtt_avg, 0.083)
         self.assertEqual(ret.rtt_max, 0.087)
