@@ -36,7 +36,8 @@ def ping_host(host: str, timeout: int = 15, packets: int = 5) -> PingStats:
 
 def resolve_any_hostname(hostnames: List[str]) -> Tuple[str, str]:
     """Resolve IPv4 of the provided hostnames.
-    Return the first resolved hostname and its address
+    Return the first resolved hostname and its address.
+    Returns empty strings if none could be resolved.
     """
     # @TODO: support resovling using specified name servers
 
