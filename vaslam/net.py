@@ -17,6 +17,8 @@ class HttpConError(ConnectionError):
 
 class PingStats:
     def __init__(self):
+        self.packets_sent = 0  # type: int
+        self.packets_recv = 0  # type: int
         self.packet_loss_pct = 0  # type: int
         self.rtt_min = 0  # type: float
         self.rtt_max = 0  # type: float
@@ -24,7 +26,7 @@ class PingStats:
 
     def connected(self) -> bool:
         """Returns True if the ping stats show connection"""
-        return self.packet_loss_pct < 100 and self.rtt_max > 0
+        return self.packets_recv > 0
 
 
 def ping_host(host: str, timeout: int = 10) -> PingStats:
@@ -72,7 +74,7 @@ def _parse_ping_output(out: str) -> PingStats:
     lines = [l.strip() for l in out.splitlines() if l.strip()]
     for line in lines:
         # rtt min/avg/max/mdev = 9.956/10.264/10.738/0.340 ms
-        match = re.match(r".*rtt.+min/avg/max.+=\s*(\S+)\s+.*", line)
+        match = re.search(r".*rtt.+min/avg/max.+=\s*(\S+)", line)
         if match:
             rtts = [t.strip() for t in match.group(1).strip().split("/")]
             if len(rtts) > 2:
@@ -81,9 +83,14 @@ def _parse_ping_output(out: str) -> PingStats:
                 stats.rtt_max = float(rtts[2])
             continue
         # 3 packets transmitted, 3 received, 0% packet loss, time 2003ms
-        match = re.match(r".*(\d+)%\s+packet\s*loss.*", line)
+        match = re.search(r"(\d+)%\s+packet\s*loss", line)
         if match:
             stats.packet_loss_pct = int(match.group(1))
+
+        match = re.search(r"(\d+)\s+packets\s*transmit.*(\d+)\s+receiv", line)
+        if match:
+            stats.packets_sent = int(match.group(1))
+            stats.packets_recv = int(match.group(2))
 
     return stats
 

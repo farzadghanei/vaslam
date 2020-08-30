@@ -25,22 +25,10 @@ class TestPingStats(TestCase):
         ps = PingStats()
         self.assertFalse(ps.connected())
 
-    def test_ping_stats_less_than_100_pct_loss_and_some_max_is_connected(self):
+    def test_ping_stats_with_packets_recv_is_connected(self):
         ps = PingStats()
-        ps.packet_loss_pct = 99
-        ps.rtt_max = 0.001
+        ps.packets_recv = 1
         self.assertTrue(ps.connected())
-
-    def test_ping_stats_less_than_100_pct_loss_and_no_max_is_not_connected(self):
-        ps = PingStats()
-        ps.packet_loss_pct = 90
-        self.assertFalse(ps.connected())
-
-    def test_ping_stats_100_loss_and_some_max_is_not_connected(self):
-        ps = PingStats()
-        ps.packet_loss_pct = 100
-        ps.rtt_max = 0.001
-        self.assertFalse(ps.connected())
 
 
 class TestPing(TestCase):
@@ -120,27 +108,31 @@ class TestParsePingOutput(TestCase):
 PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
 
 --- 127.0.0.1 ping statistics ---
-3 packets transmitted, 3 received, 1% packet loss, time 2063ms
+3 packets transmitted, 2 received, 33% packet loss, time 2063ms
 rtt min/avg/max/mdev = 0.079/0.083/0.087/0.003 ms
 """
         res = _parse_ping_output(output)
         self.assertIsInstance(res, PingStats)
-        self.assertEqual(1, res.packet_loss_pct)
+        self.assertEqual(3, res.packets_sent)
+        self.assertEqual(2, res.packets_recv)
+        self.assertEqual(33, res.packet_loss_pct)
         self.assertEqual(0.079, res.rtt_min)
         self.assertEqual(0.083, res.rtt_avg)
         self.assertEqual(0.087, res.rtt_max)
 
-    def test_ping_parse_output_ping_s20190515_buster(self):
+    def test_ping_parse_output_ping_s20190515_buster_changed(self):
         output = """
 PING 127.0.0.1 (127.0.0.1) 56(84) bytes of data.
 
 --- 127.0.0.1 ping statistics ---
-3 packets transmitted, 3 received, 2% packet loss, time 58ms
+3 packets transmitted, 3 received, 1% packet loss, time 58ms
 rtt min/avg/max/mdev = 0.066/0.087/0.099/0.016 ms
 """
         res = _parse_ping_output(output)
         self.assertIsInstance(res, PingStats)
-        self.assertEqual(2, res.packet_loss_pct)
+        self.assertEqual(3, res.packets_sent)
+        self.assertEqual(3, res.packets_recv)
+        self.assertEqual(1, res.packet_loss_pct)
         self.assertEqual(0.066, res.rtt_min)
         self.assertEqual(0.087, res.rtt_avg)
         self.assertEqual(0.099, res.rtt_max)
