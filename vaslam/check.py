@@ -1,7 +1,7 @@
 from logging import getLogger
 from typing import List, Tuple
 from vaslam.conf import Conf
-from vaslam.net import ping_host, resolve_any_domain, http_get, PingStats
+from vaslam.net import ping_host, resolve_any_hostname, http_get, PingStats
 
 
 logger = getLogger(__name__)
@@ -29,17 +29,17 @@ class Result:
         return rsl
 
 
-def check_dns(name_servers: List[str], domains: List[str]) -> str:
-    """Check DNS by resolving the domains from the specified name servers.
-    Return the first name server address that could resolve any of the domains.
-    Return emptry string if none of the name servers could resolve any of the domains.
+def check_dns(name_servers: List[str], hostnames: List[str]) -> str:
+    """Check DNS by resolving the hostnames from the specified name servers.
+    Return the first name server address that could resolve any of the hostnames.
+    Return emptry string if none of the name servers could resolve any of the hostnames.
     """
     logger.warning("checking individual name server is not supported yet!")
-    domain, ip = resolve_any_domain(domains)
+    hostname, ip = resolve_any_hostname(hostnames)
     return ip
     for ns in name_servers:
         logger.wa("checking name server {}".format(ns))
-        domain, ip = resolve_any_domain(domains)
+        hostname, ip = resolve_any_hostname(hostnames)
         if ip:
             return ns
     return ""
@@ -77,7 +77,7 @@ def get_visible_ipv4(urls: List[str]) -> str:
 
 
 def diagnose_network(conf: Conf) -> Result:
-    dns_ok = check_dns(conf.ipv4_default_name_servers, conf.domains)
+    dns_ok = check_dns(conf.ipv4_default_name_servers, conf.hostnames)
     ipv4 = dns_ok and get_visible_ipv4(conf.ipv4_echo_urls)
 
     if ipv4:

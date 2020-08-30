@@ -6,7 +6,7 @@ from vaslam.net import (
     _parse_ping_output,
     ping_host,
     http_get,
-    resolve_any_domain,
+    resolve_any_hostname,
     PingStats,
     ConnectionError,
     HttpConError,
@@ -182,24 +182,26 @@ class TestResolveAnyDomain(TestCase):
         self.mock_gethostbyname = patcher.start()
         self.mock_gethostbyname.return_value = "127.0.0.1"
 
-    def test_resolve_any_domain_returns_domain_and_resolved_address(self):
-        ret = resolve_any_domain(["localhost"])
+    def test_resolve_any_hostname_returns_hostname_and_resolved_address(self):
+        ret = resolve_any_hostname(["localhost"])
         self.assertEqual(("localhost", "127.0.0.1"), ret)
 
-    def test_resolve_any_domain_calls_gethostbyname(self):
-        ret = resolve_any_domain(["localhost"])
+    def test_resolve_any_hostname_calls_gethostbyname(self):
+        ret = resolve_any_hostname(["localhost"])
         self.mock_gethostbyname.assert_called_once_with("localhost")
 
-    def test_resolve_any_domain_calls_gethostbyname_with_next_domain_on_errors(self):
+    def test_resolve_any_hostname_calls_gethostbyname_with_next_hostname_on_errors(
+        self,
+    ):
         self.mock_gethostbyname.side_effect = OSError("mocked err in tests")
-        ret = resolve_any_domain(["invalid.local", "localhost"])
+        ret = resolve_any_hostname(["invalid.local", "localhost"])
         self.mock_gethostbyname.assert_has_calls(
             [call("invalid.local"), call("localhost")]
         )
 
-    def test_resolve_any_domain_calls_gethostbyname_returns_empty_values_on_all_errors(
+    def test_resolve_any_hostname_calls_gethostbyname_returns_empty_values_on_all_errors(
         self,
     ):
         self.mock_gethostbyname.side_effect = OSError("mocked err in tests")
-        ret = resolve_any_domain(["invalid.local", "localhost"])
+        ret = resolve_any_hostname(["invalid.local", "localhost"])
         self.assertEqual(("", ""), ret)

@@ -36,15 +36,15 @@ def ping_host(host: str, timeout: int = 10) -> PingStats:
     return _parse_ping_output(_ping_cmd(host, timeout))
 
 
-def resolve_any_domain(domains: List[str]) -> Tuple[str, str]:
-    """Resolve IPv4 of the provided domains.
-    Return the first resolved domain and its address
+def resolve_any_hostname(hostnames: List[str]) -> Tuple[str, str]:
+    """Resolve IPv4 of the provided hostnames.
+    Return the first resolved hostname and its address
     """
     # @TODO: support resovling using specified name servers
 
-    for domain in domains:
+    for hostname in hostnames:
         try:
-            return domain, gethostbyname(domain)
+            return hostname, gethostbyname(hostname)
         except OSError as err:
             continue
     return "", ""

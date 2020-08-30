@@ -38,7 +38,11 @@ setup_params = dict(
     classifiers=classifiers,
     test_suite="tests",
     zip_safe=True,
-    entry_points=dict(console_scripts=["vaslam=vaslam.app:main",]),
+    entry_points=dict(
+        console_scripts=[
+            "vaslam=vaslam.app:main",
+        ]
+    ),
 )  # type: ignore
 
 
