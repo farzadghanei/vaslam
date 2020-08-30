@@ -24,10 +24,6 @@ class PingStats:
         self.rtt_max = 0  # type: float
         self.rtt_avg = 0  # type: float
 
-    def connected(self) -> bool:
-        """Returns True if the ping stats show connection"""
-        return self.packets_recv > 0
-
 
 def ping_host(host: str, timeout: int = 15, packets: int = 5) -> PingStats:
     """ping remote host
@@ -60,7 +56,7 @@ def http_get(url: str, timeout: int = 10) -> Tuple[int, str]:
     try:
         with urlopen(url, timeout=timeout) as resp:
             code = int(resp.getcode())
-            body = resp.read()
+            body = resp.read().decode("utf-8")
     except (RuntimeError, URLError) as err:
         raise HttpConError("failed to http get {}: {}".format(url, err))
 

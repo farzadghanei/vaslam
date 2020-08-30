@@ -21,15 +21,6 @@ class TestPingStats(TestCase):
         self.assertEqual(0, ps.rtt_max)
         self.assertEqual(0, ps.rtt_avg)
 
-    def test_ping_stats_all_zero_is_not_connected(self):
-        ps = PingStats()
-        self.assertFalse(ps.connected())
-
-    def test_ping_stats_with_packets_recv_is_connected(self):
-        ps = PingStats()
-        ps.packets_recv = 1
-        self.assertTrue(ps.connected())
-
 
 class TestPing(TestCase):
     def setUp(self):
@@ -158,7 +149,7 @@ class TestHttpGet(TestCase):
         self.mock_urlopen = patcher.start()
         self.mock_resp = Mock()
         self.mock_resp.getcode.return_value = 200
-        self.mock_resp.read.return_value = "<html></html>"
+        self.mock_resp.read.return_value = b"<html></html>"
         self.mock_urlopen.return_value.__enter__.return_value = self.mock_resp
 
     def test_http_get_returns_http_code_and_body_tuple(self):
