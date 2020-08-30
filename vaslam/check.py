@@ -103,11 +103,10 @@ class Result:
         return issues
 
 
-def check_dns(name_servers: List[str], hostnames: List[str]) -> Tuple[str, str]:
+def check_dns(hostnames: List[str]) -> Tuple[str, str]:
     """Check DNS by resolving the hostnames.
     Return the resolved hostname and the IPv4 address.
     """
-    logger.warning("checking individual name server is not supported yet!")
     return resolve_any_hostname(hostnames)
 
 
@@ -119,7 +118,7 @@ def check_ping_ipv4(hosts: List[str]) -> Tuple[str, PingStats]:
     ping_stats = PingStats()
     for host in hosts:
         logger.debug("pinging host {}".format(host))
-        ping_stats = ping_host(host)
+        ping_stats = ping_host(host)  # @TODO: increase packets to get more accurate results
         if ping_stats.packets_recv > 0:
             return (host, ping_stats)
     return "", ping_stats
@@ -144,7 +143,7 @@ def get_visible_ipv4(urls: List[str]) -> str:
 
 
 def diagnose_network(conf: Conf) -> Result:
-    _, dns_ok = check_dns(conf.ipv4_default_name_servers, conf.hostnames)
+    _, dns_ok = check_dns(conf.hostnames)
     ipv4 = dns_ok and get_visible_ipv4(conf.ipv4_echo_urls)
 
     if ipv4:

@@ -1,5 +1,5 @@
 import sys
-from os import EX_OK
+from os import EX_OK, EX_TEMPFAIL
 from argparse import ArgumentParser
 from vaslam.conf import default_conf
 from vaslam.check import diagnose_network
@@ -18,7 +18,11 @@ def main(args=None) -> int:
     opts = parse_args(args)
     conf = default_conf()
     result = diagnose_network(conf)
-    print(result)
+    issues = result.get_issues()
+    if issues:
+        for issue in issues:
+            print(issue)
+        return EX_TEMPFAIL
     return EX_OK
 
 
