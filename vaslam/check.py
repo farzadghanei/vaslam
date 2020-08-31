@@ -6,10 +6,14 @@ from vaslam.net import ping_host, resolve_any_hostname, http_get, PingStats
 logger = getLogger(__name__)
 
 
-def check_dns(hostnames: List[str]) -> Tuple[str, str]:
+def check_dns(hostnames: List[str]) -> Tuple[str, str, float, str]:
     """Check DNS by resolving the hostnames.
-    Return the resolved hostname and the IPv4 address.
-    Returns empty strings if none could be resolved.
+    Return a tuple of info of:
+        - the first resolved hostname
+        - the resolved address
+        - miliseconds that took to resolve
+        - IP address of the resolver (currently empty until implemented)
+    Returns empty strings and zero numerics if none could be resolved.
     """
     logger.debug("resovling hostnames: {}".format(", ".join(hostnames)))
     return resolve_any_hostname(hostnames)

@@ -177,10 +177,19 @@ class TestResolveAnyDomain(TestCase):
         self.addCleanup(patcher.stop)
         self.mock_gethostbyname = patcher.start()
         self.mock_gethostbyname.return_value = "127.0.0.1"
+        patcher = patch("vaslam.net.time")
+        self.addCleanup(patcher.stop)
+        self.mock_time = patcher.start()
+        self.mock_time.return_value = 1598897218.545765
 
     def test_resolve_any_hostname_returns_hostname_and_resolved_address(self):
         ret = resolve_any_hostname(["localhost"])
-        self.assertEqual(("localhost", "127.0.0.1"), ret)
+        self.assertEqual(("localhost", "127.0.0.1"), ret[0:2])
+
+    def test_resolve_any_hostname_returns_duration_in_miliseconds(self):
+        self.mock_time.side_effect = [1598897218.545, 1598897220.545]
+        ret = resolve_any_hostname(["localhost"])
+        self.assertEqual(("localhost", "127.0.0.1", 2000, ""), ret)
 
     def test_resolve_any_hostname_calls_gethostbyname(self):
         ret = resolve_any_hostname(["localhost"])
@@ -200,4 +209,4 @@ class TestResolveAnyDomain(TestCase):
     ):
         self.mock_gethostbyname.side_effect = OSError("mocked err in tests")
         ret = resolve_any_hostname(["invalid.local", "localhost"])
-        self.assertEqual(("", ""), ret)
+        self.assertEqual(("", "", 0, ""), ret)

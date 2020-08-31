@@ -108,7 +108,7 @@ class Result:
 
 def diagnose_network(conf: Conf) -> Result:
     def _ns_ipv4(names, urls, que):
-        name, _ = check_dns(names)
+        name, _, _, _ = check_dns(names)
         que.put(("dns", True if name else False))
         ipv4 = get_visible_ipv4(urls) if name else ""
         que.put(("ipv4", ipv4))

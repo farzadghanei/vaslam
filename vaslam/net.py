@@ -1,5 +1,6 @@
 from os import path
 import re
+from time import time
 from socket import gethostbyname
 from urllib.request import urlopen
 from urllib.error import URLError
@@ -34,19 +35,26 @@ def ping_host(host: str, timeout: int = 15, packets: int = 5) -> PingStats:
     return _parse_ping_output(_ping_cmd(host, timeout, packets))
 
 
-def resolve_any_hostname(hostnames: List[str]) -> Tuple[str, str]:
+def resolve_any_hostname(hostnames: List[str]) -> Tuple[str, str, float, str]:
     """Resolve IPv4 of the provided hostnames.
-    Return the first resolved hostname and its address.
-    Returns empty strings if none could be resolved.
+    Return a tuple of info of:
+        - the first resolved hostname
+        - the resolved address
+        - miliseconds that took to resolve
+        - IP address of the resolver (currently empty unti implemented)
+    Returns empty strings and zero numerics if none could be resolved.
     """
     # @TODO: support resovling using specified name servers
 
     for hostname in hostnames:
         try:
-            return hostname, gethostbyname(hostname)
+            start = float(time() * 1000)
+            host = gethostbyname(hostname)
+            dur = float(time() * 1000) - start
+            return (hostname, host, dur, "")  # @TODO: return resolver IP
         except OSError as err:
             continue
-    return "", ""
+    return "", "", 0, ""
 
 
 def http_get(url: str, timeout: int = 10) -> Tuple[int, str]:
