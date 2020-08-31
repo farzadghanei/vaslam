@@ -2,7 +2,7 @@ import sys
 from os import EX_OK, EX_TEMPFAIL
 from argparse import ArgumentParser
 from vaslam.conf import default_conf
-from vaslam.check import diagnose_network
+from vaslam.diag import diagnose_network
 from vaslam import __summary__, __version__
 
 
