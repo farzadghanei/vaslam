@@ -110,7 +110,7 @@ def diagnose_network(conf: Conf) -> Result:
     def _ns_ipv4(names, urls, que):
         name, _, _, _ = check_dns(names)
         que.put(("dns", True if name else False))
-        ipv4 = get_visible_ipv4(urls) if name else ""
+        ipv4, _ = get_visible_ipv4(urls) if name else "", 0
         que.put(("ipv4", ipv4))
         que.put(("http", True if ipv4 else False))
 

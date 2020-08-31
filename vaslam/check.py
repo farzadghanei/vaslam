@@ -1,3 +1,4 @@
+from time import time
 from logging import getLogger
 from typing import List, Tuple
 from vaslam.net import ping_host, resolve_any_hostname, http_get, PingStats
@@ -35,19 +36,21 @@ def check_ping_ipv4(hosts: List[str]) -> Tuple[str, PingStats]:
     return "", ping_stats
 
 
-def get_visible_ipv4(urls: List[str]) -> str:
-    """Return visible IPv4 address of current host.
-    Return empty string if could not detect the visible IPv4 address.
+def get_visible_ipv4(urls: List[str]) -> Tuple[str, float]:
+    """Return visible IPv4 address of current host, and the time it took
+    to call the URL and get results.
+    Return empty string and zero time if could not detect the visible IPv4 address.
     """
     for url in urls:
         try:
             logger.debug("getting visible ipv4 from {}".format(url))
+            start = float(time() * 1000)
             _, ip = http_get(url)
             if ip:
-                return ip.strip()
+                return ip.strip(), (float(time() * 1000) - start)
         except RuntimeError as err:
             logger.exception(
                 "error when getting visible ipv4 from {}: {}".format(url, err)
             )
             pass
-    return ""
+    return "", 0
