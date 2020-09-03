@@ -1,26 +1,43 @@
 from logging import getLogger
 from queue import Queue
 from threading import Thread
-from typing import List
+from typing import List, Mapping
 from vaslam.conf import Conf
 from vaslam.check import check_dns, check_ping_ipv4, get_visible_ipv4
 from vaslam.net import PingStats
 
 
-LOCALNET_UNKNOWN = 101
-LOCALNET_GATEWAY_UNREACHABLE = 102
-LOCALNET_PACKET_LOSS_HIGH = 103
-LOCALNET_LATENCY_HIGH = 104
-LOCALNET_PACKET_LOSS = 105
-LOCALNET_LATENCY = 106
-INTERNET_UNKNOWN = 201
-INTERNET_UNREACHABLE = 202
-INTERNET_PACKET_LOSS_HIGH = 203
-INTERNET_LATENCY_HIGH = 204
-INTERNET_PACKET_LOSS = 205
-INTERNET_LATENCY = 206
-DNS_FAIL = 300
-HTTP_FAIL = 400
+LOCALNET_UNKNOWN = 101  # type :int
+LOCALNET_GATEWAY_UNREACHABLE = 102  # type :int
+LOCALNET_PACKET_LOSS_HIGH = 103  # type :int
+LOCALNET_LATENCY_HIGH = 104  # type :int
+LOCALNET_PACKET_LOSS = 105  # type :int
+LOCALNET_LATENCY = 106  # type :int
+INTERNET_UNKNOWN = 201  # type :int
+INTERNET_UNREACHABLE = 202  # type :int
+INTERNET_PACKET_LOSS_HIGH = 203  # type :int
+INTERNET_LATENCY_HIGH = 204  # type :int
+INTERNET_PACKET_LOSS = 205  # type :int
+INTERNET_LATENCY = 206  # type :int
+DNS_FAIL = 300  # type :int
+HTTP_FAIL = 400  # type :int
+
+MESSAGES = {
+    LOCALNET_UNKNOWN: "Local network connection quality is unknown",
+    LOCALNET_GATEWAY_UNREACHABLE: "Local network gateway is unreachable",
+    LOCALNET_PACKET_LOSS_HIGH: "Local network has high packet loss",
+    LOCALNET_LATENCY_HIGH: "Local network has high latency",
+    LOCALNET_PACKET_LOSS: "Local network has packet loss",
+    LOCALNET_LATENCY: "Local network has latency",
+    INTERNET_UNKNOWN: "Quality of connection to the Internet is unknown",
+    INTERNET_UNREACHABLE: "Internet is unreachable",
+    INTERNET_PACKET_LOSS_HIGH: "Connection to the Internet has high packet loss",
+    INTERNET_LATENCY_HIGH: "Connection to the Internet has high latency",
+    INTERNET_PACKET_LOSS: "Connection to the Internet has packet loss",
+    INTERNET_LATENCY: "Connection to the Internet has latency",
+    DNS_FAIL: "Name resolution failed, DNS issue",
+    HTTP_FAIL: "Web access failed",
+}  # type: Mapping[int, str]
 
 
 logger = getLogger(__name__)
