@@ -1,7 +1,14 @@
 from time import time
 from logging import getLogger
 from typing import List, Tuple
-from vaslam.net import ping_host, resolve_any_hostname, http_get, PingStats
+from vaslam.net import (
+    ping_host,
+    resolve_any_hostname,
+    http_get,
+    PingStats,
+    ConnectionError,
+    HttpConError,
+)
 
 
 logger = getLogger(__name__)
@@ -28,10 +35,18 @@ def check_ping_ipv4(hosts: List[str]) -> Tuple[str, PingStats]:
     ping_stats = PingStats()
     for host in hosts:
         logger.debug("pinging host {}".format(host))
-        ping_stats = ping_host(
-            host
-        )  # @TODO: increase packets to get more accurate results
+        try:
+            ping_stats = ping_host(
+                host, 15, 5
+            )  # @TODO: increase packets to get more accurate results
+        except ConnectionError as err:
+            logger.warning("failed to ping '{}'. {}".format(host, err))
+            # @TODO: maybe find a more accurate way to signal ping failure
+            ping_stats = PingStats()
+            ping_stats.packets_sent = 5
+            ping_stats.packet_loss_pct = 100
         if ping_stats.packets_recv > 0:
+            logger.info("did ping host {}".format(host))
             return (host, ping_stats)
     return "", ping_stats
 
@@ -48,9 +63,6 @@ def get_visible_ipv4(urls: List[str]) -> Tuple[str, float]:
             _, ip = http_get(url)
             if ip:
                 return ip.strip(), (float(time() * 1000) - start)
-        except RuntimeError as err:
-            logger.exception(
-                "error when getting visible ipv4 from {}: {}".format(url, err)
-            )
-            pass
+        except HttpConError as err:
+            logger.warning("failed to get visible ipv4 from {}: {}".format(url, err))
     return "", 0

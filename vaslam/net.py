@@ -27,11 +27,11 @@ class PingStats:
 
 
 def ping_host(host: str, timeout: int = 15, packets: int = 5) -> PingStats:
-    """ping remote host
+    """Ping a remote host, return results as a PingStats instance.
 
     :raises: ConnectionError on ping timeout or errors
     """
-    # @TODO: maybe support ICMP packets instead of running an external process
+    # @TODO: support inprocess ICMP packets when the external ping program is not available
     return _parse_ping_output(_ping_cmd(host, timeout, packets))
 
 
@@ -101,7 +101,10 @@ def _parse_ping_output(out: str) -> PingStats:
 
 
 def _ping_cmd(host: str, timeout: int = 15, packets: int = 5) -> str:
-    """ping host using ping command"""
+    """Ping a remote host using external ping command, return the ping cmd output
+
+    :raises :ConnectionError on timeout or failure to ping
+    """
 
     if not path.exists("/usr/bin/ping"):
         raise NotImplementedError()

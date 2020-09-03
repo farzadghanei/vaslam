@@ -124,6 +124,10 @@ class Result:
 
 
 def diagnose_network(conf: Conf) -> Result:
+    """Diagnose network and Internet connection using the provided configuration.
+    Runs checks concurrently. Returns the results as a Result instance.
+    """
+
     def _ns_ipv4(names, urls, que):
         name, _, _, _ = check_dns(names)
         que.put(("dns", True if name else False))
