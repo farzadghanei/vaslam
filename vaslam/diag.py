@@ -1,7 +1,8 @@
 from logging import getLogger
 from queue import Queue
-from threading import Thread
-from typing import List, Mapping
+from collections import deque
+from threading import Thread, Event
+from typing import List, Mapping, Callable, Optional
 from vaslam.conf import Conf
 from vaslam.check import check_dns, check_ping_ipv4, get_visible_ipv4
 from vaslam.net import PingStats
@@ -129,42 +130,69 @@ def issue_message(code: int) -> str:
     return messages.get(code, '')
 
 
-def diagnose_network(conf: Conf) -> Result:
+def diagnose_network(conf: Conf, observer: Callable[[int, int], Optional[bool]] = None) -> Result:
     """Diagnose network and Internet connection using the provided configuration.
     Runs checks concurrently. Returns the results as a Result instance.
+    Accepts an observer function to notify the progress. The observer receives
+    the total steps, step counter.
+    If the observer returns False, it's a signal to stop the diagnosis.
     """
 
-    def _ns_ipv4(names, urls, que):
+    steps_done = Queue()  # type: Queue
+    results = deque()  # type: deque
+    result = Result()  # type: Result
+    # total steps: dns + http + ping gateway + ping internet
+    total = 4  # type: int
+    step_counter = 0  # type: int
+    event_stop = Event()  # type: Event
+
+    def _ns_ipv4(names: List[str], urls: List[str], rq: deque, dq: Queue, stop: Event):
+        # @TODO: pass stop event to check commands
         name, _, _, _ = check_dns(names)
-        que.put(("dns", True if name else False))
+        dq.put('dns')
+        rq.append(("dns", True if name else False))
+        if stop.is_set():
+            return
+        # @TODO: pass stop event to check commands
         ipv4, _ = get_visible_ipv4(urls) if name else "", 0
-        que.put(("ipv4", ipv4))
-        que.put(("http", True if ipv4 else False))
+        dq.put('http')
+        rq.append(("ipv4", ipv4))
+        rq.append(("http", True if ipv4 else False))
 
-    def _ping_gw(gw, que):
+    def _ping_gw(gw: str, rq : deque, dq : Queue, stop: Event):
+        # @TODO: pass stop event to check commands
         host, ping_stats = check_ping_ipv4([gw])
-        que.put(("gw", (host, ping_stats)))
+        dq.put('gw')
+        rq.append(("gw", (host, ping_stats)))
 
-    def _ping_in(hosts, que):
+    def _ping_in(hosts: List[str], rq: deque, dq: Queue, stop: Event):
+        # @TODO: pass stop event to check commands
         host, ping_stats = check_ping_ipv4(hosts)
-        que.put(("internet", (host, ping_stats)))
+        dq.put('internet')
+        rq.append(("internet", (host, ping_stats)))
 
-    resq = Queue()  # type: Queue
+    # @TODO: pass an event to stop the check threads
     check_threads = []  # type: List[Thread]
-    check_threads.append(Thread(target=_ping_gw, args=(conf.ipv4_gateway, resq)))
-    check_threads.append(Thread(target=_ping_in, args=(conf.ipv4_ping_hosts, resq)))
+    check_threads.append(Thread(target=_ping_gw, args=(conf.ipv4_gateway, results, steps_done, event_stop)))
+    check_threads.append(Thread(target=_ping_in, args=(conf.ipv4_ping_hosts, results, steps_done, event_stop)))
     check_threads.append(
-        Thread(target=_ns_ipv4, args=(conf.hostnames, conf.ipv4_echo_urls, resq))
+        Thread(target=_ns_ipv4, args=(conf.hostnames, conf.ipv4_echo_urls, results, steps_done, event_stop))
     )
     for th in check_threads:
         th.start()
 
+    while step_counter < total:
+        _ = steps_done.get()
+        step_counter += 1
+        if observer and observer(total, step_counter) == False:
+            event_stop.set()
+            break
+
     for th in check_threads:
         th.join()
 
-    result = Result()  # type: Result
-    while resq.qsize():
-        type_, val = resq.get()
+    while len(results):
+        type_, val = results.pop()
         if type_ == "dns":
             result.dns = bool(val)
         elif type_ == "ipv4":

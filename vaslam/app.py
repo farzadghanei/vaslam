@@ -14,10 +14,18 @@ def parse_args(args=None):
     return parser.parse_args(args)
 
 
+def _diag_prog(total: int, step: int) -> None:
+    pct = int(step * 100.0 / total)
+    dots = '.' * int(pct / 20)
+    print("\r\bdiagnosign Internet connection {:d}/{:d} {:d}% {}".format(step, total, pct, dots), end="")
+    sys.stdout.flush()
+    if step == total:
+        print("")  # print new line
+
 def main(args=None) -> int:
     opts = parse_args(args)
     conf = default_conf()
-    result = diagnose_network(conf)
+    result = diagnose_network(conf, _diag_prog)
     issues = result.get_issues()
     if issues:
         for issue in issues:
