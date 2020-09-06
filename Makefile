@@ -4,8 +4,6 @@
 SHELL = /bin/sh
 makefile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 makefile_dir := $(dir $(makefile_path))
-VERSION := $(shell grep --perl-regex '^\s*__version__\s*' vaslam/__init__.py | grep --only-matching --perl-regexp '[\d\.]+')
-TIMESTAMP_MINUTE := $(shell date -u +%Y%m%d%H%M)
 NAME=vaslam
 
 # installation
@@ -40,6 +38,7 @@ distclean: clean
 install:
 	python setup.py install
 
+# requires python black formatter
 format:
 	black .
 

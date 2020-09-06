@@ -15,7 +15,7 @@ logger = getLogger(__name__)
 
 
 def check_dns(hostnames: List[str]) -> Tuple[str, str, float, str]:
-    """Check DNS by resolving the hostnames.
+    """Check DNS by resolving the IPv4 of the hostnames.
     Return a tuple of info of:
         - the first resolved hostname
         - the resolved address
