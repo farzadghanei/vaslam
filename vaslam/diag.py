@@ -22,23 +22,6 @@ INTERNET_LATENCY = 206  # type :int
 DNS_FAIL = 300  # type :int
 HTTP_FAIL = 400  # type :int
 
-MESSAGES = {
-    LOCALNET_UNKNOWN: "Local network connection quality is unknown",
-    LOCALNET_GATEWAY_UNREACHABLE: "Local network gateway is unreachable",
-    LOCALNET_PACKET_LOSS_HIGH: "Local network has high packet loss",
-    LOCALNET_LATENCY_HIGH: "Local network has high latency",
-    LOCALNET_PACKET_LOSS: "Local network has packet loss",
-    LOCALNET_LATENCY: "Local network has latency",
-    INTERNET_UNKNOWN: "Quality of connection to the Internet is unknown",
-    INTERNET_UNREACHABLE: "Internet is unreachable",
-    INTERNET_PACKET_LOSS_HIGH: "Connection to the Internet has high packet loss",
-    INTERNET_LATENCY_HIGH: "Connection to the Internet has high latency",
-    INTERNET_PACKET_LOSS: "Connection to the Internet has packet loss",
-    INTERNET_LATENCY: "Connection to the Internet has latency",
-    DNS_FAIL: "Name resolution failed, DNS issue",
-    HTTP_FAIL: "Web access failed",
-}  # type: Mapping[int, str]
-
 
 logger = getLogger(__name__)
 
@@ -121,6 +104,29 @@ class Result:
             issues.append(HTTP_FAIL)
 
         return issues
+
+
+def issue_message(code: int) -> str:
+    """Return human readable message regarding the issue code.
+    Return emptyr string for unknown codes.
+    """
+    messages = {
+        LOCALNET_UNKNOWN: "Local network connection quality is unknown",
+        LOCALNET_GATEWAY_UNREACHABLE: "Local network gateway is unreachable",
+        LOCALNET_PACKET_LOSS_HIGH: "Local network has high packet loss",
+        LOCALNET_LATENCY_HIGH: "Local network has high latency",
+        LOCALNET_PACKET_LOSS: "Local network has packet loss",
+        LOCALNET_LATENCY: "Local network has latency",
+        INTERNET_UNKNOWN: "Quality of connection to the Internet is unknown",
+        INTERNET_UNREACHABLE: "Internet is unreachable",
+        INTERNET_PACKET_LOSS_HIGH: "Connection to the Internet has high packet loss",
+        INTERNET_LATENCY_HIGH: "Connection to the Internet has high latency",
+        INTERNET_PACKET_LOSS: "Connection to the Internet has packet loss",
+        INTERNET_LATENCY: "Connection to the Internet has latency",
+        DNS_FAIL: "Name resolution failed, DNS issue",
+        HTTP_FAIL: "Web access failed",
+    }  # type: Mapping[int, str]
+    return messages.get(code, '')
 
 
 def diagnose_network(conf: Conf) -> Result:

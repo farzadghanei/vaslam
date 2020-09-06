@@ -2,7 +2,7 @@ import sys
 from os import EX_OK, EX_TEMPFAIL
 from argparse import ArgumentParser
 from vaslam.conf import default_conf
-from vaslam.diag import diagnose_network, MESSAGES
+from vaslam.diag import diagnose_network, issue_message
 from vaslam import __summary__, __version__
 
 
@@ -21,7 +21,7 @@ def main(args=None) -> int:
     issues = result.get_issues()
     if issues:
         for issue in issues:
-            print(MESSAGES.get(issue, "Unknown issue"))
+            print(issue_message(issue) or 'Unknown issue')
         return EX_TEMPFAIL
     return EX_OK
 
