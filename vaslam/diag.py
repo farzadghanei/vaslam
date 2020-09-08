@@ -127,10 +127,12 @@ def issue_message(code: int) -> str:
         DNS_FAIL: "Name resolution failed, DNS issue",
         HTTP_FAIL: "Web access failed",
     }  # type: Mapping[int, str]
-    return messages.get(code, '')
+    return messages.get(code, "")
 
 
-def diagnose_network(conf: Conf, observer: Callable[[int, int], Optional[bool]] = None) -> Result:
+def diagnose_network(
+    conf: Conf, observer: Callable[[int, int], Optional[bool]] = None
+) -> Result:
     """Diagnose network and Internet connection using the provided configuration.
     Runs checks concurrently. Returns the results as a Result instance.
     Accepts an observer function to notify the progress. The observer receives
@@ -149,34 +151,46 @@ def diagnose_network(conf: Conf, observer: Callable[[int, int], Optional[bool]] 
     def _ns_ipv4(names: List[str], urls: List[str], rq: deque, dq: Queue, stop: Event):
         # @TODO: pass stop event to check commands
         name, _, _, _ = check_dns(names)
-        dq.put('dns')
+        dq.put("dns")
         rq.append(("dns", True if name else False))
         if stop.is_set():
             return
         # @TODO: pass stop event to check commands
         ipv4, _ = get_visible_ipv4(urls) if name else "", 0
-        dq.put('http')
+        dq.put("http")
         rq.append(("ipv4", ipv4))
         rq.append(("http", True if ipv4 else False))
 
-    def _ping_gw(gw: str, rq : deque, dq : Queue, stop: Event):
+    def _ping_gw(gw: str, rq: deque, dq: Queue, stop: Event):
         # @TODO: pass stop event to check commands
         host, ping_stats = check_ping_ipv4([gw])
-        dq.put('gw')
+        dq.put("gw")
         rq.append(("gw", (host, ping_stats)))
 
     def _ping_in(hosts: List[str], rq: deque, dq: Queue, stop: Event):
         # @TODO: pass stop event to check commands
         host, ping_stats = check_ping_ipv4(hosts)
-        dq.put('internet')
+        dq.put("internet")
         rq.append(("internet", (host, ping_stats)))
 
     # @TODO: pass an event to stop the check threads
     check_threads = []  # type: List[Thread]
-    check_threads.append(Thread(target=_ping_gw, args=(conf.ipv4_gateway, results, steps_done, event_stop)))
-    check_threads.append(Thread(target=_ping_in, args=(conf.ipv4_ping_hosts, results, steps_done, event_stop)))
     check_threads.append(
-        Thread(target=_ns_ipv4, args=(conf.hostnames, conf.ipv4_echo_urls, results, steps_done, event_stop))
+        Thread(
+            target=_ping_gw, args=(conf.ipv4_gateway, results, steps_done, event_stop)
+        )
+    )
+    check_threads.append(
+        Thread(
+            target=_ping_in,
+            args=(conf.ipv4_ping_hosts, results, steps_done, event_stop),
+        )
+    )
+    check_threads.append(
+        Thread(
+            target=_ns_ipv4,
+            args=(conf.hostnames, conf.ipv4_echo_urls, results, steps_done, event_stop),
+        )
     )
     for th in check_threads:
         th.start()
