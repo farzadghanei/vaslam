@@ -9,14 +9,26 @@ class TestCheckDns(TestCase):
         patcher = patch("vaslam.check.resolve_any_hostname")
         self.addCleanup(patcher.stop)
         self.mock_resolv = patcher.start()
-        self.mock_resolv.return_value = ("", "", 0.2, "")
+        self.mock_resolv.return_value = ("debian.org", "127.0.0.1", 0.2, "")
 
     def test_check_dns_calls_resolve_any_hostname(self):
         self.assertEqual(
-            ("", "", 0.2, ""), check_dns(["debian.org", "ubuntu.com", "opensuse.org"])
+            ("debian.org", "127.0.0.1", 0.2, ""),
+            check_dns(["debian.org", "ubuntu.com", "opensuse.org"]),
         )
-        self.mock_resolv.assert_called_once_with(
-            ["debian.org", "ubuntu.com", "opensuse.org"]
+        self.mock_resolv.assert_called_once_with(["debian.org"])
+
+    def test_check_dns_wont_stop_on_failures(self):
+        self.mock_resolv.side_effect = [
+            ("", "", 2, ""),
+            ("opensuse.org", "127.0.1.1", 0.3, ""),
+        ]
+        self.assertEqual(
+            ("opensuse.org", "127.0.1.1", 0.3, ""),
+            check_dns(["debian.org", "opensuse.org"]),
+        )
+        self.mock_resolv.assert_has_calls(
+            [call(["debian.org"]), call(["opensuse.org"])]
         )
 
 
@@ -75,7 +87,7 @@ class TestCheckPingIpv4(TestCase):
                 call("ubuntu.com", 15, 5),
             ]
         )
-        self.assertEqual(3, self.mock_logger.warning.call_count)
+        self.assertGreaterEqual(self.mock_logger.warning.call_count, 1)
 
 
 class TestGetVisibleIpv4(TestCase):
@@ -123,4 +135,4 @@ class TestGetVisibleIpv4(TestCase):
         self.mock_http.side_effect = HttpConError("mocked err in tests")
         self.assertEqual(("", 0), get_visible_ipv4(self.urls))
         self.mock_http.assert_has_calls([call(u) for u in self.urls])
-        self.assertEqual(3, self.mock_logger.warning.call_count)
+        self.assertGreaterEqual(self.mock_logger.warning.call_count, 1)

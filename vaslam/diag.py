@@ -150,7 +150,7 @@ def diagnose_network(
 
     def _ns_ipv4(names: List[str], urls: List[str], rq: deque, dq: Queue, stop: Event):
         # @TODO: pass stop event to check commands
-        name, _, _, _ = check_dns(names)
+        name, _, _, _ = check_dns(names, stop)
         dq.put("dns")
         rq.append(("dns", True if name else False))
         if stop.is_set():
@@ -163,13 +163,13 @@ def diagnose_network(
 
     def _ping_gw(gw: str, rq: deque, dq: Queue, stop: Event):
         # @TODO: pass stop event to check commands
-        host, ping_stats = check_ping_ipv4([gw])
+        host, ping_stats = check_ping_ipv4([gw], stop)
         dq.put("gw")
         rq.append(("gw", (host, ping_stats)))
 
     def _ping_in(hosts: List[str], rq: deque, dq: Queue, stop: Event):
         # @TODO: pass stop event to check commands
-        host, ping_stats = check_ping_ipv4(hosts)
+        host, ping_stats = check_ping_ipv4(hosts, stop)
         dq.put("internet")
         rq.append(("internet", (host, ping_stats)))
 

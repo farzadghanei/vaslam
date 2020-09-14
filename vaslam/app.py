@@ -19,7 +19,7 @@ from vaslam import __summary__, __version__
 logger = getLogger("vaslam")
 
 
-def parse_args(args=None):
+def _parse_args(args=None):
     parser = ArgumentParser(prog="vaslam", description=__summary__)
     parser.add_argument(
         "--version", action="version", version="%(prog)s {}".format(__version__)
@@ -49,7 +49,7 @@ def _diag_prog(total: int, step: int) -> None:
 
 
 def main(args=None) -> int:
-    opts = parse_args(args)
+    opts = _parse_args(args)
     logger.setLevel(DEBUG)  # level is set per handler
     log_level = DEBUG if opts.debug else INFO
     out_handler = NullHandler() if opts.quiet else StreamHandler(sys.stdout)
